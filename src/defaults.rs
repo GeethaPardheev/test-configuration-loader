@@ -5,7 +5,8 @@ use crate::partial::{LogLevel, PartialConfig};
 /// Fields that have no sensible default (e.g. `database_url`) are left as
 /// `None` so that validation can later produce a clear, actionable error
 /// instead of silently using an invalid placeholder.
-pub fn defaults() -> PartialConfig {
+#[must_use]
+pub const fn defaults() -> PartialConfig {
     PartialConfig {
         database_url: None, // required — must be supplied by env or file
         port: Some(8080),

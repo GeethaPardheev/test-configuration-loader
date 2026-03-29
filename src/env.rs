@@ -7,6 +7,7 @@ use crate::partial::{LogLevel, PartialConfig};
 const PREFIX: &str = "APP_";
 
 /// Helper: read an optional env var string.
+#[must_use]
 fn read_var(key: &str) -> Option<String> {
     std::env::var(key).ok()
 }
@@ -39,6 +40,10 @@ where
 ///
 /// Missing variables are silently `None`; present-but-invalid variables
 /// return [`ConfigError::InvalidEnvVar`].
+///
+/// # Errors
+/// Returns a [`ConfigError::InvalidEnvVar`] if any environment variable
+/// is present but fails to parse into its expected type.
 pub fn from_env() -> Result<PartialConfig, ConfigError> {
     let key_db = format!("{PREFIX}DATABASE_URL");
     let key_port = format!("{PREFIX}PORT");
@@ -83,13 +88,8 @@ mod tests {
     use std::sync::Mutex;
 
     /// A process-wide lock that all env-modifying tests must hold.
-    /// This prevents parallel test threads from seeing each other's
-    /// temporary env-var mutations.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
-    /// Run a closure with a temporary env var set, then restore the original
-    /// value regardless of outcome.  Holds `ENV_LOCK` for the duration so
-    /// that parallel test threads cannot interfere.
     fn with_env<F: FnOnce()>(key: &str, value: &str, f: F) {
         let _guard = ENV_LOCK.lock().expect("env lock poisoned");
         let prev = std::env::var(key).ok();
@@ -109,7 +109,7 @@ mod tests {
     fn reads_port_from_env() {
         with_env("APP_PORT", "9090", || {
             let p = from_env().expect("from_env should succeed");
-            assert_eq!(p.port, Some(9090u16));
+            assert_eq!(p.port, Some(9090_u16));
         });
     }
 

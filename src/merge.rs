@@ -9,6 +9,7 @@ use crate::partial::PartialConfig;
 ///
 /// This function is intentionally pure (no side-effects, no I/O) so that it
 /// can be tested in complete isolation.
+#[must_use]
 pub fn merge(base: PartialConfig, overlay: PartialConfig) -> PartialConfig {
     PartialConfig {
         database_url: overlay.database_url.or(base.database_url),

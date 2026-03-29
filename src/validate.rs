@@ -5,7 +5,7 @@ use crate::partial::{LogLevel, PartialConfig};
 ///
 /// All fields are guaranteed to be valid; this struct is never constructed
 /// unless every constraint has passed.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config {
     /// Database connection URL.
     pub database_url: String,
@@ -29,6 +29,10 @@ pub struct Config {
 ///   check to be safe.
 /// - `max_connections`: required; must be ≥ 1.
 /// - `timeout_secs`: required; must be ≥ 1.
+///
+/// # Errors
+/// Returns a [`ConfigError::MissingRequired`] if any required property is `None`.
+/// Returns a [`ConfigError::ValidationError`] if a configured property violates domains invariants.
 pub fn validate(partial: PartialConfig) -> Result<Config, ConfigError> {
     // ── database_url ────────────────────────────────────────────────────────
     let database_url = partial

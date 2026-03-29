@@ -16,7 +16,13 @@ impl Config {
     ///    `APP_CONFIG_FILE`)
     /// 3. Environment variables (highest priority)
     ///
-    /// Returns a fully validated [`Config`] or a descriptive [`ConfigError`].
+    /// # Errors
+    /// Returns a [`ConfigError`] if:
+    /// - An explicit config file was requested via env var but could not be read
+    /// - A config file was found but contained invalid syntax
+    /// - An environment variable was present but malformed
+    /// - A required setting was missing from all sources
+    /// - A setting failed domain validation (e.g. port 0)
     pub fn load() -> Result<Self, ConfigError> {
         let base = defaults::defaults();
         let file_partial = file::from_file(None)?;
@@ -31,6 +37,10 @@ impl Config {
     ///
     /// Useful in tests that need a specific file without affecting the
     /// process environment.
+    ///
+    /// # Errors
+    /// Returns a [`ConfigError`] if the specific file cannot be read, contains
+    /// invalid syntax, or if merging and validating the resulting config fails.
     pub fn load_from(path: &Path) -> Result<Self, ConfigError> {
         let base = defaults::defaults();
         let file_partial = file::from_file(Some(path))?;
@@ -45,6 +55,10 @@ impl Config {
     /// This is the primary entry point for unit tests — it lets tests
     /// construct arbitrary configurations without touching the filesystem
     /// or the process environment.
+    ///
+    /// # Errors
+    /// Returns a [`ConfigError`] if the provided partial config is missing
+    /// required fields or contains invalid values.
     pub fn from_partial(partial: PartialConfig) -> Result<Self, ConfigError> {
         validate::validate(partial)
     }

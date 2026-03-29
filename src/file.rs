@@ -20,8 +20,8 @@ impl FileFormat {
             .to_lowercase();
 
         match ext.as_str() {
-            "toml" => Ok(FileFormat::Toml),
-            "yaml" | "yml" => Ok(FileFormat::Yaml),
+            "toml" => Ok(Self::Toml),
+            "yaml" | "yml" => Ok(Self::Yaml),
             other => Err(ConfigError::UnsupportedFormat {
                 ext: other.to_owned(),
             }),
@@ -41,6 +41,7 @@ const PROBE_ORDER: &[&str] = &["config.toml", "config.yaml", "config.yml"];
 ///    directory.
 ///
 /// Returns `None` if no file is found and no path was explicitly required.
+#[must_use]
 fn resolve_path(explicit_path: Option<&Path>) -> Option<PathBuf> {
     if let Some(p) = explicit_path {
         return Some(p.to_path_buf());
@@ -74,7 +75,7 @@ fn parse(
             path: path_display.to_owned(),
             source: Box::new(e),
         }),
-        FileFormat::Yaml => serde_yaml::from_str(contents).map_err(|e| ConfigError::ParseError {
+        FileFormat::Yaml => serde_yml::from_str(contents).map_err(|e| ConfigError::ParseError {
             path: path_display.to_owned(),
             source: Box::new(e),
         }),
@@ -90,13 +91,17 @@ fn parse(
 /// default (all-`None`) [`PartialConfig`] rather than an error — the file
 /// is optional.
 ///
-/// If an explicit path is provided but the file does not exist, returns
-/// [`ConfigError::FileNotFound`].
+/// # Errors
+/// Returns a [`ConfigError`] if:
+/// - An explicit `explicit_path` does not exist
+/// - The file is found but cannot be read due to I/O permissions
+/// - The file's extension is not supported
+/// - The file body contains malformed syntax
 pub fn from_file(explicit_path: Option<&Path>) -> Result<PartialConfig, ConfigError> {
     let required = explicit_path.is_some();
-    let path = match resolve_path(explicit_path) {
-        Some(p) => p,
-        None => return Ok(PartialConfig::default()),
+    // Instead of a match we can use `let ... else` as recommended by clippy
+    let Some(path) = resolve_path(explicit_path) else {
+        return Ok(PartialConfig::default());
     };
 
     let path_display = path.display().to_string();
@@ -205,11 +210,6 @@ log_level: debug
 
     #[test]
     fn no_path_and_no_probe_match_returns_empty_partial() {
-        // As long as no config.toml / config.yaml exists in the cwd of the
-        // test runner, this should return the all-None default.
-        // We explicitly pass None (auto-resolve) and rely on no file
-        // existing — if one does exist in the project root, the parse
-        // should still succeed (it won't be an error, just a non-empty partial).
         let result = from_file(None);
         assert!(result.is_ok());
     }

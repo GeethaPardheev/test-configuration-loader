@@ -26,6 +26,10 @@ impl ConfigWatcher {
     ///
     /// The watcher performs an initial load via [`Config::load_from`] and
     /// then re-loads on every `Modify` event on the watched file.
+    ///
+    /// # Errors
+    /// Returns a [`ConfigError`] if the initial config load fails or the underlying
+    /// OS file-watching mechanisms cannot be initialized for the given path.
     pub fn new(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let path: PathBuf = path.as_ref().to_path_buf();
 
@@ -61,18 +65,15 @@ impl ConfigWatcher {
                     Ok(Ok(event)) => {
                         // Only re-load on actual content modifications.
                         if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
-                            match Config::load_from(&path_clone) {
-                                Ok(new_cfg) => {
-                                    if let Ok(mut guard) = shared_clone.write() {
-                                        *guard = new_cfg;
-                                    }
+                            if let Ok(new_cfg) = Config::load_from(&path_clone) {
+                                if let Ok(mut guard) = shared_clone.write() {
+                                    *guard = new_cfg;
                                 }
-                                Err(_) => {
-                                    // On reload error keep the last-known-good
-                                    // config; the error is silently discarded
-                                    // here.  Production code would emit a log
-                                    // instead.
-                                }
+                            } else {
+                                // On reload error keep the last-known-good
+                                // config; the error is silently discarded
+                                // here.  Production code would emit a log
+                                // instead.
                             }
                         }
                     }
@@ -91,6 +92,7 @@ impl ConfigWatcher {
 
     /// Get a snapshot of the current configuration.
     ///
+    /// # Errors
     /// Returns `Err` only if the internal `RwLock` has been poisoned, which
     /// would indicate a panic in the background watcher thread.
     pub fn get(&self) -> Result<Config, ConfigError> {
