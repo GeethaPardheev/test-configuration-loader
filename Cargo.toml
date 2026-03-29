@@ -1,0 +1,20 @@
+[package]
+name = "configuration-loader"
+version = "0.1.0"
+edition = "2021"
+description = "A robust, strongly-typed unified configuration loader for Rust applications"
+license = "MIT"
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+serde_yaml = "0.9"
+thiserror = "1"
+notify = "6"
+
+[dev-dependencies]
+tempfile = "3"

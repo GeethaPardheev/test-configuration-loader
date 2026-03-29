@@ -1,0 +1,12 @@
+# Cargo workspace configuration
+#
+# `APP_*` environment variables are used by the configuration loader.
+# Running tests sequentially prevents env-var mutations in one test from
+# leaking into another when tests are run in parallel threads.
+#
+# Run tests with:
+#   cargo test                      (uses RUST_TEST_THREADS=1 automatically)
+#   cargo test -- --test-threads=1  (explicit override)
+
+[alias]
+test-seq = "test -- --test-threads=1"
