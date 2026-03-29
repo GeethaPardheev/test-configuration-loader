@@ -1,0 +1,20 @@
+# Default configuration (TOML format)
+# Copy this file to config.toml in your working directory, or point
+# APP_CONFIG_FILE at it.  All values here can be overridden by setting
+# the corresponding environment variable.
+
+# REQUIRED — no default exists in code.
+database_url = "postgres://localhost/myapp"
+
+# Optional — defaults to 8080.
+port = 8080
+
+# Optional — defaults to "info".
+# Allowed values: trace | debug | info | warn | error
+log_level = "info"
+
+# Optional — defaults to 10.
+max_connections = 10
+
+# Optional — defaults to 30.
+timeout_secs = 30

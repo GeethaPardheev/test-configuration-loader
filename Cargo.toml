@@ -1,0 +1,23 @@
+[package]
+name = "configuration-loader"
+version = "0.1.0"
+edition = "2021"
+description = "A robust, strongly-typed unified configuration loader for Rust applications"
+license = "MIT"
+rust-version = "1.80"
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+# serde_yaml is officially deprecated; serde_yml is the maintained successor
+# published by the same author (dtolnay).
+serde_yml = "0.0.12"
+thiserror = "2"
+notify = "8"
+
+[dev-dependencies]
+tempfile = "3"
